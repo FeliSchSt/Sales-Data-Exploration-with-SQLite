@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="C:\Users\felis\Github_DataScience\SQL_Tableau\Sales\sales.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="1"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="150"/><column_width id="3" width="7021"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,12:mainV_productcat"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="Kaggle_sales" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort><column index="5" mode="1"/></sort><column_widths><column index="1" value="155"/><column index="2" value="107"/><column index="3" value="133"/><column index="4" value="86"/><column index="5" value="61"/><column index="6" value="182"/><column index="7" value="99"/><column index="8" value="139"/><column index="9" value="141"/></column_widths><filter_values><column index="2" value="12"/></filter_values><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="V_productcat" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="188"/><column index="2" value="127"/><column index="3" value="125"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="Code">SELECT *
+FROM Kaggle_sales
+
+
+-- How does customer age and gender influence their purchasing behaviour?
+
+CREATE VIEW V_agegender AS
+SELECT
+	Age,
+	ProductCategory,
+	SUM(Quantity) AS [Quantity]
+FROM
+	Kaggle_sales
+GROUP BY
+	Age,
+	ProductCategory
+
+	
+SELECT
+	Gender,
+	ProductCategory,
+	SUM(Quantity) AS [Quantity]
+FROM
+	Kaggle_sales
+GROUP BY
+	Gender,
+	ProductCategory	
+	
+-- Are there discernible patterns in sales over the year 2023?
+
+CREATE VIEW V_salespattern AS	
+SELECT
+    substr(Date, 4, 2) AS Month,
+    COUNT(TotalAmount) AS [Number of Purchases],
+    ROUND(AVG(Quantity), 2) AS [Average Quantity],
+    ROUND(AVG(PriceperUnit), 2) AS [Average Price per Unit],
+    ROUND(AVG(TotalAmount), 2) AS [Average Amount]
+FROM
+    Kaggle_sales
+WHERE
+	substr(Date, 7, 4) = '2023'
+GROUP BY
+    substr(Date, 4, 2)
+
+	
+-- Which product categories hold the highest appeal among customers?
+
+CREATE VIEW V_productcat AS
+SELECT
+	ProductCategory AS [Product Category],
+	COUNT(*) AS [Total Count],
+	COUNT(CASE WHEN Gender = 'Male' THEN 1 END) AS [Male Count],
+	COUNT(CASE WHEN Gender = 'Female' THEN 1 END) AS [Female Count]
+FROM
+	Kaggle_sales
+GROUP BY
+	ProductCategory
+
+-- What are the relationships between age, spending, and product preferences?
+
+CREATE VIEW V_agespendingpref AS
+SELECT
+	Age,
+	ProductCategory,
+	ROUND(AVG(TotalAmount),2) AS [Average Amount]	
+FROM
+	Kaggle_sales
+GROUP BY
+	Age,
+	ProductCategory
+
+-- How do customers adapt their shopping habits during seasonal trends? 
+
+CREATE VIEW V_seasonaltrend AS
+SELECT
+    ProductCategory AS [Product Category],
+	CASE
+        WHEN SUBSTR(Date, 4, 2) IN ('12', '01', '02') THEN 'Winter'
+        WHEN SUBSTR(Date, 4, 2) IN ('03', '04', '05') THEN 'Spring'
+        WHEN SUBSTR(Date, 4, 2) IN ('06', '07', '08') THEN 'Summer'
+        WHEN SUBSTR(Date, 4, 2) IN ('09', '10', '11') THEN 'Autumn'
+		ELSE 'Error'
+    END AS Season,
+    Gender,
+    ROUND(AVG(Quantity),2) AS [Average Quantity],
+    ROUND(AVG(TotalAmount),2) AS [Average Amount]
+FROM
+    Kaggle_sales
+GROUP BY 
+	ProductCategory,
+	Season,
+	Gender
+ORDER BY
+	ProductCategory,
+    CASE Season
+		WHEN 'Winter' THEN 1
+		WHEN 'Spring' THEN 2
+		WHEN 'Summer' THEN 3
+		WHEN 'Autumn' THEN 4
+		ELSE 'Error'
+	END,
+	Gender
+	
+	
+-- Are there distinct purchasing behaviors based on the number of items bought per transaction?
+
+CREATE VIEW V_noitemspertrans AS
+SELECT
+    ProductCategory AS [Product Category],
+    CASE
+        WHEN Age &gt;= 18 AND Age &lt;= 25 THEN 'Between 18 and 25'
+        WHEN Age &gt;= 26 AND Age &lt;= 35 THEN 'Between 26 and 35'
+        WHEN Age &gt;= 36 AND Age &lt;= 45 THEN 'Between 36 and 45'
+        WHEN Age &gt;= 46 AND Age &lt;= 55 THEN 'Between 46 and 55'
+        WHEN Age &gt;= 56 AND Age &lt;= 64 THEN 'Between 56 and 64'
+        ELSE 'Error'
+    END AS [Age Group],
+    Gender,
+    SUM(CASE WHEN Quantity = '1' THEN 1 ELSE 0 END) AS [1 Item],
+    SUM(CASE WHEN Quantity = '2' THEN 1 ELSE 0 END) AS [2 Items],
+    SUM(CASE WHEN Quantity = '3' THEN 1 ELSE 0 END) AS [3 Items],
+    SUM(CASE WHEN Quantity = '4' THEN 1 ELSE 0 END) AS [4 Items]
+FROM
+    Kaggle_sales
+GROUP BY
+    ProductCategory,
+    [Age Group],
+    Gender
+
+
+-- What insights can be gleaned from the distribution of product prices within each category?
+
+CREATE VIEW V_distrprodprices AS
+SELECT
+    ProductCategory AS [Product Category],
+    PriceperUnit AS [Price per Unit],
+    COUNT(*) AS Occurrences
+FROM
+    Kaggle_sales
+GROUP BY
+    ProductCategory,
+    PriceperUnit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</sql><current_tab id="0"/></tab_sql></sqlb_project>
