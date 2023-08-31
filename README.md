@@ -11,3 +11,5 @@ In the SQLite script I explore a Kaggle dataset on sales, uploaded as Kaggle_sal
 - How do customers adapt their shopping habits during seasonal trends?
 - Are there distinct purchasing behaviors based on the number of items bought per transaction?
 - What insights can be gleaned from the distribution of product prices within each category?
+
+The respective pieces of code are saved as views (V_) and their outputs are uploaded as csv files.
